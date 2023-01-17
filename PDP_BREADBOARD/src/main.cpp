@@ -23,14 +23,22 @@
 // See guide for details on sensor wiring and usage:
 //   https://learn.adafruit.com/dht/overview
 
+#define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
+#define TIME_TO_SLEEP  5        /* Time ESP32 will go to sleep (in seconds) */
+
+
 DHT_Unified dht(DHTPIN, DHTTYPE);
 
 uint32_t delayMS;
 
 void setup() {
   Serial.begin(9600);
+  delay(1000);
+
+  // deep sleep pour 5secondes
+  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
+
   // Initialize device.
-  Serial.println(F("DHTxx Unified Sensor Example"));
   dht.begin();
   // Print temperature sensor details.
   sensor_t sensor;
@@ -54,14 +62,7 @@ void setup() {
   Serial.print  (F("Min Value:   ")); Serial.print(sensor.min_value); Serial.println(F("%"));
   Serial.print  (F("Resolution:  ")); Serial.print(sensor.resolution); Serial.println(F("%"));
   Serial.println(F("------------------------------------"));
-  // Set delay between sensor readings based on sensor details.
-  delayMS = sensor.min_delay / 1000;
-}
 
-void loop() {
-  // Delay between measurements.
-  delay(delayMS);
-  // Get temperature event and print its value.
   sensors_event_t event;
   dht.temperature().getEvent(&event);
   if (isnan(event.temperature)) {
@@ -82,4 +83,11 @@ void loop() {
     Serial.print(event.relative_humidity);
     Serial.println(F("%"));
   }
+
+  Serial.println("Going to sleep now");
+  Serial.flush(); 
+  esp_deep_sleep_start();
+}
+
+void loop() {
 }
